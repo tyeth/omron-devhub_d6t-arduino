@@ -54,10 +54,10 @@ void loop() {
 
     // loop temperature pixels of each thrmopiles measurements
     for (size_t row = 0, rows = d6t.rows(); row < rows; row++) {
-        Serial.print( d6t.objectTempF( 0, row ), 1 );  // print PTAT & Temperature
+        Serial.print( d6t.objectTempC( 0, row ), 1 );  // print PTAT & Temperature
         for (size_t col = 1, cols = d6t.cols(); col < cols; col++) {
             Serial.print( "," );   // print delimiter
-            Serial.print( d6t.objectTempF( col, row ), 1 );  // print PTAT & Temperature
+            Serial.print( d6t.objectTempC( col, row ), 1 );  // print PTAT & Temperature
         }
         Serial.println( " [degC]" );  // wrap text at ROW end.
     }
