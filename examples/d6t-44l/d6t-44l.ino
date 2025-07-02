@@ -47,7 +47,8 @@ void loop() {
     d6t.read();
     // 1st data is PTAT measurement (: Proportional To Absolute Temperature)
     Serial.print( "PTAT:" );
-    Serial.println( d6t.ambientTempC(), 1 );
+    Serial.print( d6t.ambientTempC(), 1 );
+    Serial.print( " [degC], Temperature:" );
 
     // loop temperature pixels of each thrmopiles measurements
     for (size_t row = 0, rows = d6t.rows(); row < rows; row++) {
