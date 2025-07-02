@@ -51,7 +51,7 @@ public:
     D6T_32L
   };
 
-  OmronD6T( Model model = D6T_1A );
+  OmronD6T( Model model = D6T_1A, TwoWire *i2c = &Wire );
   ~OmronD6T();
 
   bool begin( uint8_t i2caddr = I2CADDR );
@@ -130,6 +130,7 @@ private:
   static uint8_t crc8up( uint8_t initcrc, uint8_t data );
 
   uint8_t m_addr;
+  TwoWire *m_i2c = nullptr;
   Model m_model;
   size_t m_numElements;
   uint8_t m_rows;

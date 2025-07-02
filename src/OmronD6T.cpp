@@ -52,8 +52,9 @@ enum RegVal : uint8_t {
 };
 } // namespace d6t
 
-OmronD6T::OmronD6T( Model model ) {
+OmronD6T::OmronD6T( Model model, TwoWire *i2c ) {
   m_model = model > D6T_32L ? D6T_1A : model;
+  m_i2c = i2c;
   switch (m_model) {
     case D6T_1A: m_numElements = 1; m_rows = 1; m_cols = 1; break;
     case D6T_8L: m_numElements = 8; m_rows = 1; m_cols = 8; break;
@@ -74,36 +75,36 @@ OmronD6T::~OmronD6T() {
 
 
 uint8_t OmronD6T::read8Array( uint8_t regaddr, uint8_t *buf, size_t len, bool checkPec ) const {
-  Wire.beginTransmission( m_addr ); // start transmission to device
-  Wire.write( regaddr );           // sends register address to read from
-  uint8_t ret = Wire.endTransmission( false );   // end transmission
+  m_i2c->beginTransmission( m_addr ); // start transmission to device
+  m_i2c->write( regaddr );           // sends register address to read from
+  uint8_t ret = m_i2c->endTransmission( false );   // end transmission
   if (ret != I2C_ERROR_OK) {
     return ret;
   }
 
   uint8_t pecl = 0;
-  uint8_t bytesRead = Wire.requestFrom( m_addr, len + 1U ); // send request for (len + 1) bytes (len data, 1 pec)
+  uint8_t bytesRead = m_i2c->requestFrom( m_addr, len + 1U ); // send request for (len + 1) bytes (len data, 1 pec)
   if (bytesRead != (len + 1U)) {
     #ifdef ESP32
     return 4; // Return I2C_ERROR_BUS (value 4) on ESP32 for bus errors
     #else
     #ifdef Wire_h
     #ifdef ARDUINO_ARCH_SAMD
-    return Wire.lastError();
+    return m_i2c->lastError();
     #else
     return 4; // Generic error for other Arduino platforms
     #endif
     #else
-    return 4; // Generic error if Wire.h doesn't provide error codes
+    return 4; // Generic error if m_i2c->h doesn't provide error codes
     #endif
     #endif
   }
   pecl = crc8up( pecl, (m_addr << 1) | 0x1 ); // update CRC with 7-bit address shifted with master flag (1)
   for (size_t pos = 0; pos < len; pos++) {
-    buf[pos] = Wire.read();  // receive payload byte
+    buf[pos] = m_i2c->read();  // receive payload byte
     pecl = crc8up( pecl, buf[pos] ); // update CRC from payload byte
   }
-  uint8_t pecr = Wire.read();   // receive remote PEC
+  uint8_t pecr = m_i2c->read();   // receive remote PEC
   if (pecr != pecl) {
     ret = SMBUS_ERROR_PEC;
   }
@@ -111,31 +112,31 @@ uint8_t OmronD6T::read8Array( uint8_t regaddr, uint8_t *buf, size_t len, bool ch
 }
 
 uint8_t OmronD6T::read16sArray( uint8_t regaddr, int16_t *buf, size_t numwords, bool sendStop ) const {
-  Wire.beginTransmission( m_addr ); // start transmission to device
-  Wire.write( regaddr );           // sends register address to read from
-  uint8_t ret = Wire.endTransmission( false );   // end transmission
+  m_i2c->beginTransmission( m_addr ); // start transmission to device
+  m_i2c->write( regaddr );           // sends register address to read from
+  uint8_t ret = m_i2c->endTransmission( false );   // end transmission
   if (ret != I2C_ERROR_OK) {
     return ret;
   }
 
   uint8_t pecl = 0;
-  uint8_t bytesRead = Wire.requestFrom( m_addr, 2*numwords + 1U ); // send request for (2*numwords + 1) bytes
+  uint8_t bytesRead = m_i2c->requestFrom( m_addr, 2*numwords + 1U ); // send request for (2*numwords + 1) bytes
   if (bytesRead != (2*numwords + 1U)) {
     #if defined(Wire_h) && defined(ARDUINO_ARCH_SAMD)
-    return Wire.lastError();
+    return m_i2c->lastError();
     #else
     return 4; // Generic error for other Arduino platforms
     #endif
   }
   pecl = crc8up( pecl, (m_addr << 1) | 0x1 ); // update CRC with 7-bit address shifted with master flag (1)
   for (size_t pos = 0; pos < numwords; pos++) {
-    int paylo = Wire.read();  // receive payload byte
+    int paylo = m_i2c->read();  // receive payload byte
     pecl = crc8up( pecl, paylo ); // update CRC from payload byte
-    int payhi = Wire.read();  // receive payload byte
+    int payhi = m_i2c->read();  // receive payload byte
     pecl = crc8up( pecl, payhi ); // update CRC from payload byte
     buf[pos] = payhi << 8 | (paylo & 0xFF);  // receive payload byte
   }
-  uint8_t pecr = Wire.read();   // receive remote PEC
+  uint8_t pecr = m_i2c->read();   // receive remote PEC
   if (pecr != pecl) {
     ret = SMBUS_ERROR_PEC;
   }
@@ -153,22 +154,22 @@ uint8_t OmronD6T::crc8up( uint8_t crc, uint8_t data ) {
 
 uint8_t OmronD6T::write16( uint8_t regaddr, uint8_t data0, uint8_t data1, bool sendStop ) const {
   uint8_t pec = 0;
-  Wire.beginTransmission( m_addr );
+  m_i2c->beginTransmission( m_addr );
   pec = crc8up( 0, m_addr << 1 );
-  Wire.write( regaddr );  // register address to write
+  m_i2c->write( regaddr );  // register address to write
   pec = crc8up( pec, regaddr );
-  Wire.write( data0 );    // lo
+  m_i2c->write( data0 );    // lo
   pec = crc8up( pec, data0 );
-  Wire.write( data1 );    // hi
+  m_i2c->write( data1 );    // hi
   pec = crc8up( pec, data1 );
-  Wire.write( pec );      // pec
-  return Wire.endTransmission( sendStop );
+  m_i2c->write( pec );      // pec
+  return m_i2c->endTransmission( sendStop );
 }
 
 bool OmronD6T::begin( uint8_t i2caddr ) {
   m_addr = i2caddr;
 
-  bool ret = Wire.begin();
+  bool ret = m_i2c->begin();
   if (!ret) {
     return false;
   }
@@ -202,43 +203,43 @@ uint8_t OmronD6T::read() {
   // Wire buffers are enough to read D6T-16L data (33bytes) with
   // MKR-WiFi1010 and Feather ESP32,
   // these have 256 and 128 buffers in their libraries.
-  Wire.beginTransmission( m_addr ); // start transmission to device
-  Wire.write( d6t::TGT_DATA );           // sends register address to read from
-  uint8_t ret = Wire.endTransmission( false );   // end transmission
+  m_i2c->beginTransmission( m_addr ); // start transmission to device
+  m_i2c->write( d6t::TGT_DATA );           // sends register address to read from
+  uint8_t ret = m_i2c->endTransmission( false );   // end transmission
   if (ret != I2C_ERROR_OK) {
     return ret;
   }
 
   uint8_t pecl = 0;
   uint8_t bytesRequested = sizeof(m_ambientTempTenthC) + m_numElements*sizeof(m_objTempsTenthC[0]) + 1U;
-  uint8_t bytesRead = Wire.requestFrom(m_addr, bytesRequested);
+  uint8_t bytesRead = m_i2c->requestFrom(m_addr, bytesRequested);
   if (bytesRead != bytesRequested) {
     #if defined(Wire_h) && defined(ARDUINO_ARCH_SAMD)
-    return Wire.lastError();
+    return m_i2c->lastError();
     #else
     return 4; // Generic error for other Arduino platforms
     #endif
   }
   pecl = crc8up( pecl, (m_addr << 1) | 0x1 ); // update CRC with 7-bit address shifted with master flag (1)
   // 1st data is PTAT measurement (: Proportional To Absolute Temperature)
-  int paylo = Wire.read();  // receive payload byte
+  int paylo = m_i2c->read();  // receive payload byte
   pecl = crc8up( pecl, paylo ); // update CRC from payload byte
-  int payhi = Wire.read();  // receive payload byte
+  int payhi = m_i2c->read();  // receive payload byte
   pecl = crc8up( pecl, payhi ); // update CRC from payload byte
   m_ambientTempTenthC = payhi << 8 | (paylo & 0xFF); // pack into le int16
 
   memset( m_objTempsTenthC, 0, m_numElements*sizeof(m_objTempsTenthC[0]) );
   for (size_t elem = 0; elem < m_numElements; elem++) {
-    paylo = Wire.read();  // receive payload byte
+    paylo = m_i2c->read();  // receive payload byte
     pecl = crc8up( pecl, paylo ); // update CRC from payload byte
-    payhi = Wire.read();  // receive payload byte
+    payhi = m_i2c->read();  // receive payload byte
     pecl = crc8up( pecl, payhi ); // update CRC from payload byte
     m_objTempsTenthC[elem] = payhi << 8 | (paylo & 0xFF);  // receive payload byte
     if (m_objTempsTenthC[m_objTempMaxIdx] < m_objTempsTenthC[elem]) {
       m_objTempMaxIdx = elem;
     }
   }
-  uint8_t pecr = Wire.read();   // receive remote PEC
+  uint8_t pecr = m_i2c->read();   // receive remote PEC
   if (pecr != pecl) {
     ret = SMBUS_ERROR_PEC;
   }
