@@ -86,7 +86,7 @@ see `https://www.arduino.cc/en/guide/libraries`
 1. download this repo
 
     ```shell
-    $ git clone https://github.com/omron-devhub/d6t-2jcieev01-arduino
+    $ git clone https://github.com/tyeth/omron-devhub_d6t-arduino
     ```
 
 2. launch Arduino-IDE and select our sketch to load.
