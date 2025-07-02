@@ -20,7 +20,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- * 
+ *
  * Refactored by: Aron Rubin 2020
  */
 
@@ -30,6 +30,10 @@
 
 #include <stdint.h>
 #include <stddef.h>
+
+#ifndef I2C_ERROR_OK
+#define I2C_ERROR_OK 0
+#endif
 
 #ifndef SMBUS_ERROR_PEC
 #define SMBUS_ERROR_PEC 16
