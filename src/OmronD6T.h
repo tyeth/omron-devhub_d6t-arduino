@@ -54,7 +54,7 @@ public:
   OmronD6T( Model model = D6T_1A, TwoWire *i2c = &Wire );
   ~OmronD6T();
 
-  bool begin( uint8_t i2caddr = I2CADDR );
+  bool begin( uint8_t i2caddr = I2CADDR, bool callBeginI2C = true );
   uint8_t read();
 
   size_t numElements() const {

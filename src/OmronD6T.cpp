@@ -166,12 +166,17 @@ uint8_t OmronD6T::write16( uint8_t regaddr, uint8_t data0, uint8_t data1, bool s
   return m_i2c->endTransmission( sendStop );
 }
 
-bool OmronD6T::begin( uint8_t i2caddr ) {
+bool OmronD6T::begin( uint8_t i2caddr, bool callBeginI2C ) {
   m_addr = i2caddr;
-
-  bool ret = m_i2c->begin();
-  if (!ret) {
-    return false;
+  if (callBeginI2C) {
+    #if defined(ARDUINO_ARCH_ESP32)
+    bool ret = m_i2c->begin();
+    if (!ret) {
+      return false;
+    }
+    #else
+    m_i2c->begin();
+    #endif
   }
 
   write16( d6t::TGT_CTRL, d6t::REG_CTRL, d6t::CTRL_ON );
