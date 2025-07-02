@@ -1,7 +1,5 @@
-# d6t-2jcieev01-arduino
-It is a sample projects for D6T OMRON MEMS Thermal Sensors with
-evaluation kit **2JCIE-EV01-AR1**,
-**2JCIE-EV01-FT1** and some Arduino boards.
+This is a fork of the OMRON D6T Arduino example repository.
+See https://github.com/omron-devhub for details and other platforms.
 
 D6T sensor series are High Sensitivity Enables Detection
 of Stationary Human Presence,
@@ -24,6 +22,7 @@ sample projects output the sensor data to USB-Serial ports.
 | d6t-44l  | D6T-44L-06 / D6T-44L-06H   | 4x4   | Arduino / ESP32 |
 | d6t-32l  | D6T-32L-01A                | 32x32 | Arduino / ESP32 |
 
+Tested on Adafruit Feather ESP32S3 No PSRAM with 3v to 5v I2C adapter and D6T-1A.
 
 ## DEMO
 sample output for D6T-32L
@@ -105,16 +104,19 @@ None
 - [RaspberryPi sample for D6F on 2JCIE-01-RP1](https://github.com/omron-devhub/d6f-2jcieev01-raspberrypi)
 - [Arduino sample for B5W on 2JCIE-01-AR1/FT1](https://github.com/omron-devhub/b5w-2jcieev01-arduino)
 
-projects by another authors.
+projects by other authors.
 
 - [d6t-grove-tinkerboard project](https://github.com/omron-devhub/d6t-grove-tinkerboard)
 - [d6t-grove-m5stack project](https://github.com/omron-devhub/d6t-grove-m5stack)
-- [d6t-grove-arduino project](https://github.com/omron-devhub/d6t-grove-arduino)  
+- [d6t-grove-arduino project](https://github.com/omron-devhub/d6t-grove-arduino)
     only for element 4x4 type, but libralized.
+- [omron-devhub_d6t-arduino](https://github.com/tyeth/omron-devhub_d6t-arduino)
+    library for all arduino platforms - added to arduino library registry
 
 
 ## Licence
 Copyright (c) OMRON Corporation. All rights reserved.
+Modified by Tyeth Gundry (c) 2025, all rights reserved.
 
 Licensed under the MIT License.
 
