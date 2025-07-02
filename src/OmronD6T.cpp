@@ -168,9 +168,10 @@ uint8_t OmronD6T::write16( uint8_t regaddr, uint8_t data0, uint8_t data1, bool s
 
 bool OmronD6T::begin( uint8_t i2caddr, bool callBeginI2C ) {
   m_addr = i2caddr;
+  bool ret = true;
   if (callBeginI2C) {
     #if defined(ARDUINO_ARCH_ESP32)
-    bool ret = m_i2c->begin();
+    ret = m_i2c->begin();
     if (!ret) {
       return false;
     }
