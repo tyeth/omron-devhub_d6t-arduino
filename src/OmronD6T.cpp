@@ -20,7 +20,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- * 
+ *
  * Refactored by: Aron Rubin 2020
  */
 
@@ -82,9 +82,21 @@ uint8_t OmronD6T::read8Array( uint8_t regaddr, uint8_t *buf, size_t len, bool ch
   }
 
   uint8_t pecl = 0;
-  ret = Wire.requestFrom( m_addr, len + 1U ); // send request for (len + 1) bytes (len data, 1 pec)
-  if (ret == 0) {
+  uint8_t bytesRead = Wire.requestFrom( m_addr, len + 1U ); // send request for (len + 1) bytes (len data, 1 pec)
+  if (bytesRead != (len + 1U)) {
+    #ifdef ESP32
+    return 4; // Return I2C_ERROR_BUS (value 4) on ESP32 for bus errors
+    #else
+    #ifdef Wire_h
+    #ifdef ARDUINO_ARCH_SAMD
     return Wire.lastError();
+    #else
+    return 4; // Generic error for other Arduino platforms
+    #endif
+    #else
+    return 4; // Generic error if Wire.h doesn't provide error codes
+    #endif
+    #endif
   }
   pecl = crc8up( pecl, (m_addr << 1) | 0x1 ); // update CRC with 7-bit address shifted with master flag (1)
   for (size_t pos = 0; pos < len; pos++) {
@@ -107,9 +119,13 @@ uint8_t OmronD6T::read16sArray( uint8_t regaddr, int16_t *buf, size_t numwords, 
   }
 
   uint8_t pecl = 0;
-  ret = Wire.requestFrom( m_addr, 2*numwords + 1U ); // send request for (2*numwords + 1) bytes
-  if (ret == 0) {
+  uint8_t bytesRead = Wire.requestFrom( m_addr, 2*numwords + 1U ); // send request for (2*numwords + 1) bytes
+  if (bytesRead != (2*numwords + 1U)) {
+    #if defined(Wire_h) && defined(ARDUINO_ARCH_SAMD)
     return Wire.lastError();
+    #else
+    return 4; // Generic error for other Arduino platforms
+    #endif
   }
   pecl = crc8up( pecl, (m_addr << 1) | 0x1 ); // update CRC with 7-bit address shifted with master flag (1)
   for (size_t pos = 0; pos < numwords; pos++) {
@@ -194,11 +210,14 @@ uint8_t OmronD6T::read() {
   }
 
   uint8_t pecl = 0;
-  ret = Wire.requestFrom(
-      m_addr,
-      sizeof(m_ambientTempTenthC) + m_numElements*sizeof(m_objTempsTenthC[0]) + 1U );
-  if (ret == 0) {
+  uint8_t bytesRequested = sizeof(m_ambientTempTenthC) + m_numElements*sizeof(m_objTempsTenthC[0]) + 1U;
+  uint8_t bytesRead = Wire.requestFrom(m_addr, bytesRequested);
+  if (bytesRead != bytesRequested) {
+    #if defined(Wire_h) && defined(ARDUINO_ARCH_SAMD)
     return Wire.lastError();
+    #else
+    return 4; // Generic error for other Arduino platforms
+    #endif
   }
   pecl = crc8up( pecl, (m_addr << 1) | 0x1 ); // update CRC with 7-bit address shifted with master flag (1)
   // 1st data is PTAT measurement (: Proportional To Absolute Temperature)

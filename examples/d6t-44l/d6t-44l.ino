@@ -24,6 +24,7 @@
 
 /* includes */
 #include <Arduino.h>
+#include <Wire.h>
 #include <OmronD6T.h>
 
 OmronD6T d6t( OmronD6T::D6T_44L );
